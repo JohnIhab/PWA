@@ -7,13 +7,19 @@
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="icons/images.jpg" type="image/x-icon">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Todo PWA">
 </head>
 <body>
     <div class="container">
-        <h1>Todo List</h1>
+        <h1>📝 Todo List</h1>
         <div class="input-container">
             <input type="text" id="todoInput" placeholder="Add a new task...">
-            <button onclick="addTodo()">Add</button>
+            <button onclick="addTodo()">➕ Add</button>
         </div>
         <ul id="todoList"></ul>
     </div>

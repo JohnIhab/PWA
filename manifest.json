@@ -1,20 +1,44 @@
 {
     "name": "Simple Todo PWA",
     "short_name": "Todo PWA",
-    "start_url": "/index.html",
+    "description": "A simple and elegant todo list with offline support",
+    "start_url": "./index.html",
     "display": "standalone",
+    "orientation": "portrait-primary",
     "background_color": "#ffffff",
-    "theme_color": "#007bff",
+    "theme_color": "#667eea",
+    "scope": "./",
+    "lang": "en",
+    "categories": ["productivity", "utilities"],
+    "shortcuts": [
+        {
+            "name": "Add New Task",
+            "short_name": "New Task",
+            "description": "Quickly add a new todo item",
+            "url": "./index.html?action=new",
+            "icons": [
+                {
+                    "src": "icons/images.jpg",
+                    "sizes": "192x192",
+                    "type": "image/jpeg"
+                }
+            ]
+        }
+    ],
     "icons": [
         {
-            "src": "icons/2558328-removebg-preview.png",
+            "src": "icons/images.jpg",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/jpeg",
+            "purpose": "any maskable"
         },
         {
-            "src": "icons/2558328-removebg-preview.png",
+            "src": "icons/images.jpg",
             "sizes": "512x512",
-            "type": "image/png"
+            "type": "image/jpeg",
+            "purpose": "any maskable"
         }
-    ]
+    ],
+    "prefer_related_applications": false,
+    "related_applications": []
 }
