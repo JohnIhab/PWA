@@ -255,6 +255,7 @@ li button:hover {
     margin: 20px 0;
     text-align: center;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
 }
 
 .inspiration-quote h3 {
@@ -266,6 +267,45 @@ li button:hover {
     opacity: 0.9;
     font-style: italic;
     line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+/* Quote Progress Indicator */
+.quote-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    opacity: 0.8;
+}
+
+.quote-dots {
+    display: flex;
+    gap: 8px;
+}
+
+.quote-dots .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quote-dots .dot.active {
+    background: white;
+    transform: scale(1.2);
+}
+
+.quote-dots .dot:hover {
+    background: rgba(255, 255, 255, 0.7);
+    transform: scale(1.1);
+}
+
+.quote-counter {
+    font-size: 0.9rem;
+    opacity: 0.7;
 }
 
 /* Todo Item Enhancements */

@@ -5,6 +5,8 @@ class TodoPWA {
         this.todos = JSON.parse(localStorage.getItem('todos')) || [];
         this.inspirationQuotes = [];
         this.isOnline = navigator.onLine;
+        this.quoteTimer = null; // Timer for auto-changing quotes
+        this.currentQuoteIndex = 0; // Track current quote index
         this.init();
     }
 
@@ -17,6 +19,7 @@ class TodoPWA {
         this.checkNetworkStatus();
         await this.loadInspirationData();
         this.showWelcomeMessage();
+        this.startQuoteRotation(); // Start auto-changing quotes
         console.log('TodoPWA: Initialization complete');
     }
 
@@ -74,6 +77,20 @@ class TodoPWA {
         document.getElementById('todoInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.addTodo();
         });
+
+        // Cleanup quote timer when page is unloaded
+        window.addEventListener('beforeunload', () => {
+            this.stopQuoteRotation();
+        });
+
+        // Pause quote rotation when page is not visible
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.stopQuoteRotation();
+            } else {
+                this.startQuoteRotation();
+            }
+        });
     }
 
     // Load inspiration data from API
@@ -124,6 +141,63 @@ class TodoPWA {
                 this.showToast('Using cached inspiration quotes (offline mode)', 'warning');
             }
         }
+    }
+
+    // Start automatic quote rotation every 10 seconds
+    startQuoteRotation() {
+        // Clear any existing timer
+        if (this.quoteTimer) {
+            clearInterval(this.quoteTimer);
+        }
+        
+        // Start new timer to change quotes every 10 seconds
+        this.quoteTimer = setInterval(() => {
+            if (this.inspirationQuotes.length > 0) {
+                this.showNextQuote();
+            }
+        }, 10000); // 10 seconds = 10000 milliseconds
+        
+        console.log('TodoPWA: Quote rotation started - quotes will change every 10 seconds');
+    }
+
+    // Stop quote rotation
+    stopQuoteRotation() {
+        if (this.quoteTimer) {
+            clearInterval(this.quoteTimer);
+            this.quoteTimer = null;
+            console.log('TodoPWA: Quote rotation stopped');
+        }
+    }
+
+    // Show next quote in sequence
+    showNextQuote() {
+        if (this.inspirationQuotes.length === 0) return;
+        
+        // Move to next quote (cycle back to 0 when reaching the end)
+        this.currentQuoteIndex = (this.currentQuoteIndex + 1) % this.inspirationQuotes.length;
+        
+        const currentQuote = this.inspirationQuotes[this.currentQuoteIndex];
+        
+        // Update the inspiration section with animation
+        const inspirationDiv = document.getElementById('inspiration');
+        if (inspirationDiv) {
+            // Add fade-out effect
+            inspirationDiv.style.opacity = '0.5';
+            inspirationDiv.style.transform = 'translateY(-5px)';
+            
+            setTimeout(() => {
+                inspirationDiv.innerHTML = `
+                    <h3>💡 ${currentQuote.title}</h3>
+                    <p>${currentQuote.text}</p>
+                `;
+                
+                // Add fade-in effect
+                inspirationDiv.style.opacity = '1';
+                inspirationDiv.style.transform = 'translateY(0)';
+            }, 300);
+        }
+        
+        console.log(`TodoPWA: Showing quote ${this.currentQuoteIndex + 1} of ${this.inspirationQuotes.length}`);
     }
 
     // Load cached inspiration data
@@ -193,7 +267,8 @@ class TodoPWA {
     displayInspirationQuote() {
         if (this.inspirationQuotes.length === 0) return;
         
-        const randomQuote = this.inspirationQuotes[Math.floor(Math.random() * this.inspirationQuotes.length)];
+        // Start with the first quote or continue from current index
+        const currentQuote = this.inspirationQuotes[this.currentQuoteIndex];
         
         // Create or update inspiration section
         let inspirationDiv = document.getElementById('inspiration');
@@ -201,16 +276,35 @@ class TodoPWA {
             inspirationDiv = document.createElement('div');
             inspirationDiv.id = 'inspiration';
             inspirationDiv.className = 'inspiration-quote';
+            inspirationDiv.style.transition = 'all 0.3s ease';
             document.querySelector('.container').appendChild(inspirationDiv);
         }
         
         inspirationDiv.innerHTML = `
-            <h3>💡 ${randomQuote.title}</h3>
-            <p>${randomQuote.text}</p>
+            <h3>💡 ${currentQuote.title}</h3>
+            <p>${currentQuote.text}</p>
+            <div class="quote-progress">
+                <div class="quote-dots">
+                    ${this.inspirationQuotes.map((_, index) => 
+                        `<span class="dot ${index === this.currentQuoteIndex ? 'active' : ''}" onclick="window.app.jumpToQuote(${index})"></span>`
+                    ).join('')}
+                </div>
+                <div class="quote-counter">${this.currentQuoteIndex + 1} / ${this.inspirationQuotes.length}</div>
+            </div>
         `;
         
         // Cache the quotes
         localStorage.setItem('inspirationQuotes', JSON.stringify(this.inspirationQuotes));
+    }
+
+    // Jump to specific quote
+    jumpToQuote(index) {
+        if (index >= 0 && index < this.inspirationQuotes.length) {
+            this.currentQuoteIndex = index;
+            this.showNextQuote();
+            // Restart the timer
+            this.startQuoteRotation();
+        }
     }
 
     // Save todos to localStorage
