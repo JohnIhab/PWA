@@ -1,6 +1,7 @@
 // Todo PWA with Service Worker, API, and Offline Support
 class TodoPWA {
     constructor() {
+        console.log('TodoPWA: Constructor called');
         this.todos = JSON.parse(localStorage.getItem('todos')) || [];
         this.inspirationQuotes = [];
         this.isOnline = navigator.onLine;
@@ -8,6 +9,7 @@ class TodoPWA {
     }
 
     async init() {
+        console.log('TodoPWA: Initializing...');
         this.registerServiceWorker();
         this.setupEventListeners();
         this.renderTodos();
@@ -15,12 +17,14 @@ class TodoPWA {
         this.checkNetworkStatus();
         await this.loadInspirationData();
         this.showWelcomeMessage();
+        console.log('TodoPWA: Initialization complete');
     }
 
     // Service Worker Registration
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
+                console.log('TodoPWA: Registering service worker...');
                 const registration = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered successfully:', registration);
                 
@@ -40,7 +44,11 @@ class TodoPWA {
                 });
             } catch (error) {
                 console.error('Service Worker registration failed:', error);
+                // Continue without service worker
+                console.log('TodoPWA: Continuing without service worker');
             }
+        } else {
+            console.log('TodoPWA: Service Worker not supported');
         }
     }
 
@@ -71,25 +79,50 @@ class TodoPWA {
     // Load inspiration data from API
     async loadInspirationData() {
         try {
+            console.log('TodoPWA: Loading inspiration data...');
             this.showToast('Loading inspiration quotes...', 'info');
             
-            const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=10');
-            const posts = await response.json();
+            // Try to fetch from a quotes API that provides English quotes
+            const response = await fetch('https://api.quotable.io/quotes?minLength=50&maxLength=150&limit=10');
             
-            // Transform posts into inspiration quotes
-            this.inspirationQuotes = posts.map(post => ({
-                id: post.id,
-                title: post.title,
-                text: post.body.substring(0, 100) + '...'
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            // Transform quotes into inspiration format
+            this.inspirationQuotes = data.results.map(quote => ({
+                id: quote._id,
+                title: `Inspiration by ${quote.author}`,
+                text: quote.content
             }));
             
             this.displayInspirationQuote();
-            this.showToast('Inspiration quotes loaded!', 'success');
+            this.showToast('English inspiration quotes loaded!', 'success');
+            console.log('TodoPWA: English inspiration data loaded successfully');
             
         } catch (error) {
-            console.error('Failed to load inspiration data:', error);
-            this.loadCachedInspirationData();
-            this.showToast('Using cached inspiration quotes (offline mode)', 'warning');
+            console.error('Failed to load inspiration data from quotes API, trying fallback:', error);
+            // Fallback to JSONPlaceholder but with better English content
+            try {
+                const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=5');
+                const posts = await response.json();
+                
+                // Create more meaningful English quotes from posts
+                this.inspirationQuotes = posts.map(post => ({
+                    id: post.id,
+                    title: "Daily Motivation",
+                    text: this.generateMotivationalQuote(post.title)
+                }));
+                
+                this.displayInspirationQuote();
+                this.showToast('Motivational quotes loaded!', 'success');
+            } catch (fallbackError) {
+                console.error('Fallback API also failed:', fallbackError);
+                this.loadCachedInspirationData();
+                this.showToast('Using cached inspiration quotes (offline mode)', 'warning');
+            }
         }
     }
 
@@ -100,14 +133,60 @@ class TodoPWA {
             this.inspirationQuotes = JSON.parse(cached);
             this.displayInspirationQuote();
         } else {
-            // Fallback quotes
+            // Enhanced English fallback quotes
             this.inspirationQuotes = [
-                { id: 1, title: "Stay Productive", text: "Every task completed is a step towards your goals..." },
-                { id: 2, title: "Keep Going", text: "Progress, not perfection, is the key to success..." },
-                { id: 3, title: "You Got This", text: "Small steps daily lead to big changes yearly..." }
+                { 
+                    id: 1, 
+                    title: "Productivity Wisdom", 
+                    text: "Every task completed is a step towards your goals. Small consistent actions lead to extraordinary results." 
+                },
+                { 
+                    id: 2, 
+                    title: "Success Mindset", 
+                    text: "Progress, not perfection, is the key to success. Focus on moving forward, one task at a time." 
+                },
+                { 
+                    id: 3, 
+                    title: "Daily Motivation", 
+                    text: "Small steps daily lead to big changes yearly. Your todo list is a roadmap to your dreams." 
+                },
+                { 
+                    id: 4, 
+                    title: "Achievement Quote", 
+                    text: "The secret to getting ahead is getting started. Every completed task builds momentum for the next." 
+                },
+                { 
+                    id: 5, 
+                    title: "Time Management", 
+                    text: "You don't have to be great to get started, but you have to get started to be great." 
+                },
+                { 
+                    id: 6, 
+                    title: "Focus Power", 
+                    text: "Concentration is the secret of strength. Focus on one task at a time and watch your productivity soar." 
+                },
+                { 
+                    id: 7, 
+                    title: "Goal Achievement", 
+                    text: "A goal without a plan is just a wish. Your todo list transforms wishes into achievable steps." 
+                }
             ];
             this.displayInspirationQuote();
         }
+    }
+
+    // Generate motivational quotes from post titles
+    generateMotivationalQuote(title) {
+        const motivationalTemplates = [
+            `"${title}" - Remember, every great achievement starts with the decision to try.`,
+            `"${title}" - Success is the sum of small efforts repeated day in and day out.`,
+            `"${title}" - The way to get started is to quit talking and begin doing.`,
+            `"${title}" - Don't watch the clock; do what it does. Keep going.`,
+            `"${title}" - The future depends on what you do today.`
+        ];
+        
+        const randomTemplate = motivationalTemplates[Math.floor(Math.random() * motivationalTemplates.length)];
+        return randomTemplate;
     }
 
     // Display random inspiration quote
@@ -142,6 +221,11 @@ class TodoPWA {
     // Render todos list
     renderTodos() {
         const todoList = document.getElementById('todoList');
+        if (!todoList) {
+            console.error('todoList element not found');
+            return;
+        }
+        
         todoList.innerHTML = '';
         
         if (this.todos.length === 0) {
@@ -157,7 +241,7 @@ class TodoPWA {
             li.className = 'todo-item';
             li.innerHTML = `
                 <span class="todo-text">${todo}</span>
-                <button class="delete-btn" onclick="app.deleteTodo(${index})">🗑️</button>
+                <button class="delete-btn" onclick="window.app && window.app.deleteTodo(${index})">🗑️</button>
             `;
             todoList.appendChild(li);
         });
@@ -165,11 +249,19 @@ class TodoPWA {
 
     // Add new todo
     addTodo() {
+        console.log('TodoPWA: addTodo called');
         const input = document.getElementById('todoInput');
+        if (!input) {
+            console.error('todoInput element not found');
+            return;
+        }
+        
         const todoText = input.value.trim();
+        console.log('TodoPWA: Todo text:', todoText);
         
         if (todoText) {
             this.todos.push(todoText);
+            console.log('TodoPWA: Updated todos:', this.todos);
             this.saveTodos();
             this.renderTodos();
             input.value = '';
@@ -179,6 +271,8 @@ class TodoPWA {
             if (Math.random() < 0.3) {
                 this.displayInspirationQuote();
             }
+        } else {
+            this.showToast('Please enter a task!', 'warning');
         }
     }
 
@@ -308,7 +402,11 @@ class TodoPWA {
             "Welcome back! Ready to be productive? 🚀",
             "Let's tackle those tasks! 💪",
             "Your todo list awaits! ✨",
-            "Time to get things done! 🎯"
+            "Time to get things done! 🎯",
+            "Another productive day starts now! 🌟",
+            "Transform your goals into actions! 📋",
+            "Success begins with organization! 🎯",
+            "Make today count - one task at a time! ⚡"
         ];
         
         const randomMessage = welcomeMessages[Math.floor(Math.random() * welcomeMessages.length)];
@@ -323,15 +421,36 @@ class TodoPWA {
     }
 }
 
+// Global app reference for onclick handlers
+let app;
+
 // Global functions for backward compatibility
 function addTodo() {
-    app.addTodo();
+    console.log('Global addTodo called');
+    if (window.app && typeof window.app.addTodo === 'function') {
+        console.log('Calling app.addTodo()');
+        window.app.addTodo();
+    } else {
+        console.error('App not initialized yet or addTodo method not available');
+        console.log('window.app:', window.app);
+        // Try to add todo directly if app is not ready
+        const input = document.getElementById('todoInput');
+        if (input && input.value.trim()) {
+            console.log('Adding todo directly to localStorage');
+            const todos = JSON.parse(localStorage.getItem('todos') || '[]');
+            todos.push(input.value.trim());
+            localStorage.setItem('todos', JSON.stringify(todos));
+            input.value = '';
+            // Refresh page to show updated todos
+            setTimeout(() => location.reload(), 100);
+        }
+    }
 }
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.app = new TodoPWA();
+    console.log('DOMContentLoaded event fired');
+    app = new TodoPWA();
+    window.app = app;
+    console.log('App initialized:', app);
 });
-
-// Global app reference for onclick handlers
-let app;
