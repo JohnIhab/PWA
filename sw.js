@@ -1,8 +1,6 @@
-// Service Worker for Todo PWA
 const CACHE_NAME = 'todo-pwa-v1.0.0';
 const API_CACHE_NAME = 'todo-api-cache-v1.0.0';
 
-// Static assets to cache
 const STATIC_ASSETS = [
     './',
     './index.html',
@@ -12,7 +10,6 @@ const STATIC_ASSETS = [
     './icons/images.jpg'
 ];
 
-// Install event - cache static assets
 self.addEventListener('install', (event) => {
     console.log('Service Worker: Installing...');
     
@@ -32,7 +29,6 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
     console.log('Service Worker: Activating...');
     
@@ -55,17 +51,14 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch event - handle network requests
 self.addEventListener('fetch', (event) => {
     const requestURL = new URL(event.request.url);
     
-    // Handle API requests with cache-first strategy for data
     if (requestURL.pathname.includes('/api/') || requestURL.hostname.includes('jsonplaceholder')) {
         event.respondWith(handleApiRequest(event.request));
         return;
     }
     
-    // Handle static assets with cache-first strategy
     event.respondWith(
         caches.match(event.request)
             .then((cachedResponse) => {
@@ -92,7 +85,6 @@ self.addEventListener('fetch', (event) => {
                     .catch((error) => {
                         console.error('Service Worker: Network fetch failed', error);
                         
-                        // Return offline page for navigation requests
                         if (event.request.mode === 'navigate') {
                             return caches.match('./index.html');
                         }
@@ -103,22 +95,18 @@ self.addEventListener('fetch', (event) => {
     );
 });
 
-// Handle API requests with caching
 async function handleApiRequest(request) {
     const cache = await caches.open(API_CACHE_NAME);
     
     try {
-        // Try network first
         console.log('Service Worker: Fetching API data from network');
         const networkResponse = await fetch(request);
         
         if (networkResponse.ok) {
-            // Cache successful responses
             const responseToCache = networkResponse.clone();
             await cache.put(request, responseToCache);
             console.log('Service Worker: API data cached');
             
-            // Notify client that we're online
             self.clients.matchAll().then(clients => {
                 clients.forEach(client => {
                     client.postMessage({
@@ -134,12 +122,10 @@ async function handleApiRequest(request) {
         console.log('Service Worker: Network failed, trying cache');
     }
     
-    // Network failed, try cache
     const cachedResponse = await cache.match(request);
     if (cachedResponse) {
         console.log('Service Worker: Serving API data from cache');
         
-        // Notify client that we're offline
         self.clients.matchAll().then(clients => {
             clients.forEach(client => {
                 client.postMessage({
@@ -152,11 +138,9 @@ async function handleApiRequest(request) {
         return cachedResponse;
     }
     
-    // Both network and cache failed
     throw new Error('No cached data available');
 }
 
-// Background sync for offline actions
 self.addEventListener('sync', (event) => {
     console.log('Service Worker: Background sync', event.tag);
     
@@ -165,7 +149,6 @@ self.addEventListener('sync', (event) => {
     }
 });
 
-// Sync todos when back online
 async function syncTodos() {
     try {
         const clients = await self.clients.matchAll();
@@ -179,7 +162,6 @@ async function syncTodos() {
     }
 }
 
-// Message handling from main app
 self.addEventListener('message', (event) => {
     console.log('Service Worker: Message received', event.data);
     
@@ -188,7 +170,6 @@ self.addEventListener('message', (event) => {
     }
     
     if (event.data && event.data.type === 'CHECK_NETWORK') {
-        // Perform a network check
         fetch('https://jsonplaceholder.typicode.com/posts/1')
             .then(() => {
                 event.ports[0].postMessage({ online: true });

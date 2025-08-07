@@ -110,7 +110,6 @@ li button:hover {
     background: #c53030;
 }
 
-/* Network Indicator */
 .network-indicator {
     position: fixed;
     top: 20px;
@@ -135,7 +134,6 @@ li button:hover {
     animation: pulse 2s infinite;
 }
 
-/* Connection Lost Message */
 .connection-lost-message {
     position: fixed;
     top: 0;
@@ -184,7 +182,6 @@ li button:hover {
     line-height: 1.6;
 }
 
-/* Pulse dots animation */
 .pulse-dots {
     display: flex;
     justify-content: center;
@@ -208,7 +205,6 @@ li button:hover {
     animation-delay: 0.4s;
 }
 
-/* Toast Notifications */
 .toast {
     position: fixed;
     bottom: 30px;
@@ -246,7 +242,6 @@ li button:hover {
     background: #ed8936;
 }
 
-/* Inspiration Quote */
 .inspiration-quote {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -270,7 +265,6 @@ li button:hover {
     margin-bottom: 15px;
 }
 
-/* Quote Progress Indicator */
 .quote-progress {
     display: flex;
     justify-content: space-between;
@@ -308,7 +302,6 @@ li button:hover {
     opacity: 0.7;
 }
 
-/* Todo Item Enhancements */
 .todo-item {
     display: flex;
     justify-content: space-between;
